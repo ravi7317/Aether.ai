@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, User, Github, Chrome, Loader2, ArrowRight, X } from 'lucide-react';
+import { API_URL } from '../config';
 
 const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +26,7 @@ const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
         loginForm.append('username', formData.email);
         loginForm.append('password', formData.password);
 
-        const response = await fetch('http://127.0.0.1:8001/api/auth/login', {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
           body: loginForm
         });
@@ -37,7 +38,7 @@ const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
         if (onLoginSuccess) onLoginSuccess();
       } else {
         // Signup Logic
-        const response = await fetch('http://127.0.0.1:8001/api/auth/register', {
+        const response = await fetch(`${API_URL}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)

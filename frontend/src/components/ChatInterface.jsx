@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Moon, User, Sparkles, Copy, Check, RotateCcw, Paperclip, Mic, Image as ImageIcon, Send, Loader2, Share2, ArrowDown, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_URL } from '../config';
 
 const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpenProfile, onOpenSettings, onToggleSidebar, isSidebarOpen }) => {
   const [input, setInput] = useState('');
@@ -42,7 +43,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8001/api/conversations', {
+        const res = await fetch(`${API_URL}/api/conversations`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         setIsOnline(res.ok);
@@ -69,7 +70,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
         setIsLoading(true);
         try {
           const token = localStorage.getItem('token');
-          const response = await fetch(`http://127.0.0.1:8001/api/conversations/${conversationId}`, {
+          const response = await fetch(`${API_URL}/api/conversations/${conversationId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.ok) {
@@ -134,7 +135,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://127.0.0.1:8001/api/chat', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -246,7 +247,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
       formData.append('file', file);
       const token = localStorage.getItem('token');
 
-      const response = await fetch('http://127.0.0.1:8001/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -333,7 +334,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
           try {
             const token = localStorage.getItem('token');
             console.log("Sending audio to backend...");
-            const response = await fetch('http://127.0.0.1:8001/api/speech-to-text', {
+            const response = await fetch(`${API_URL}/api/speech-to-text`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${token}` },
               body: formData

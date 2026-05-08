@@ -1,6 +1,7 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
 import ChatInterface from '../components/ChatInterface';
+import { API_URL } from '../config';
 
 const DashboardPage = ({ onLogout }) => {
   const [activeConversationId, setActiveConversationId] = React.useState(null);
@@ -24,7 +25,7 @@ const DashboardPage = ({ onLogout }) => {
     const token = localStorage.getItem('token');
     const headers = { 'Authorization': `Bearer ${token}` };
     
-    fetch('http://127.0.0.1:8001/api/user/profile', { headers })
+    fetch(`${API_URL}/api/user/profile`, { headers })
       .then(res => res.ok ? res.json() : null)
       .then(data => setUser(data))
       .catch(err => console.error("User fetch error:", err));

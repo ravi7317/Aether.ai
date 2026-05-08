@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, GraduationCap, Target, Send, CheckCircle2, Calendar, BookOpen, Code, FileText } from 'lucide-react';
+import { API_URL } from '../config';
 
 const BookingModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
@@ -36,7 +37,7 @@ const BookingModal = ({ isOpen, onClose }) => {
 
   const handleBooking = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8001/api/demo-booking', {
+      const response = await fetch(`${API_URL}/api/demo-booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

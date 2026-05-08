@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Plus, Search, Settings, LogOut, MessageSquare, ShieldCheck, Trash2, Pin, PinOff, Calendar, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_URL } from '../config';
 
 const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewChat, refreshTrigger, user, showProfile, setShowProfile, showSettings, setShowSettings, isOpen, onClose }) => {
   const [history, setHistory] = useState([]);
@@ -17,7 +18,7 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
       'Content-Type': 'application/json'
     };
 
-    fetch('http://127.0.0.1:8001/api/conversations', { headers })
+    fetch(`${API_URL}/api/conversations`, { headers })
       .then(res => res.ok ? res.json() : [])
       .then(data => setHistory(Array.isArray(data) ? data : []))
       .catch(err => {
@@ -43,7 +44,7 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8001/api/conversations/${id}`, {
+      const response = await fetch(`${API_URL}/api/conversations/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
