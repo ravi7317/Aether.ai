@@ -17,7 +17,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from pypdf import PdfReader
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -26,7 +27,7 @@ from slowapi.errors import RateLimitExceeded
 from config import SYSTEM_INSTRUCTION
 
 # Load environment variables
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 # Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "aether-ai-super-secret-key-2026") # In prod, use a real secret!
@@ -39,8 +40,22 @@ logger = logging.getLogger("aether-ai-backend")
 
 # Gemini API
 GEN_AI_KEY = os.getenv("GEMINI_API_KEY")
+client = None
 if GEN_AI_KEY:
-    genai.configure(api_key=GEN_AI_KEY)
+    masked_key = GEN_AI_KEY[:5] + "..." + GEN_AI_KEY[-4:] if len(GEN_AI_KEY) > 10 else "***"
+    logger.info(f"Gemini API Key loaded: {masked_key}")
+    client = genai.Client(api_key=GEN_AI_KEY)
+    
+    # SCAN FOR MODELS
+    try:
+        logger.info("Scanning for available Gemini models...")
+        for m in client.models.list():
+            # In the new SDK, m is a pydantic-like object
+            logger.info(f"AVAILABLE MODEL: {m.name}")
+    except Exception as e:
+        logger.error(f"Could not list models: {e}")
+else:
+    logger.error("GEMINI_API_KEY NOT FOUND in environment variables!")
 
 # Security - Using pbkdf2_sha256 to avoid bcrypt binary issues on Windows/Python 3.14
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -314,12 +329,7 @@ async def chat_endpoint(chat_req: ChatRequest, request: Request, current_user: s
     conv_id = chat_req.conversation_id or str(uuid.uuid4())
     
     # Determine Model
-    target_model = "gemini-2.0-flash" if chat_req.model == "flash" else "gemini-1.5-pro"
-    
     try:
-        model = genai.GenerativeModel(target_model, system_instruction=SYSTEM_INSTRUCTION)
-        # Convert history
-        chat_history = []
         conn = get_db_connection()
         cur = conn.cursor()
         
@@ -338,42 +348,44 @@ async def chat_endpoint(chat_req: ChatRequest, request: Request, current_user: s
         cur.close()
         conn.close()
 
-        # Get AI Response (Streaming) with fallback for model names
+        # Get AI Response (Streaming) with the new SDK
         async def event_generator():
             full_response = ""
-            active_model = None
-            active_chat = None
-            
-            # Try different model names until one works
-            for m_name in ['models/gemini-2.0-flash', 'models/gemini-2.5-flash', 'models/gemini-3.1-flash-lite', 'models/gemini-flash-latest']:
-                try:
-                    logger.info(f"Trying Gemini model: {m_name}")
-                    test_model = genai.GenerativeModel(
-                        model_name=m_name,
-                        system_instruction=SYSTEM_INSTRUCTION
+            if not client:
+                yield f"data: {json.dumps({'error': 'Gemini Client not initialized. Check API key.'})}\n\n"
+                return
+
+            try:
+                # Prepare history for the new SDK format
+                contents = []
+                for m in chat_req.history:
+                    contents.append(types.Content(role="user" if m.role == "user" else "model", parts=[types.Part(text=m.content)]))
+                
+                # Add current message
+                contents.append(types.Content(role="user", parts=[types.Part(text=chat_req.message)]))
+
+                # Determine model
+                # Force 'gemini-flash-latest' because Pro models often have 0 quota on the free tier
+                target_model = 'gemini-flash-latest'
+                
+                # Stream response
+                response_stream = client.models.generate_content_stream(
+                    model=target_model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        temperature=0.7
                     )
-                    formatted_history = [{"role": "user" if m.role == "user" else "model", "parts": [m.content]} for m in chat_req.history]
-                    test_chat = test_model.start_chat(history=formatted_history)
-                    
-                    # Try a very small streaming call to verify the model exists
-                    response = test_chat.send_message(chat_req.message, stream=True)
-                    # If we get here, the model exists and started streaming
-                    active_model = test_model
-                    active_chat = test_chat
-                    
-                    for chunk in response:
-                        if chunk.text:
-                            full_response += chunk.text
-                            yield f"data: {json.dumps({'text': chunk.text, 'conversation_id': conv_id})}\n\n"
-                    
-                    # Successfully finished with this model
-                    break
-                except Exception as e:
-                    logger.warning(f"Model {m_name} failed: {str(e)}")
-                    continue
-            
-            if not active_model:
-                yield f"data: {json.dumps({'error': 'No compatible Gemini models found. Please check your API key.'})}\n\n"
+                )
+
+                for chunk in response_stream:
+                    if chunk.text:
+                        full_response += chunk.text
+                        yield f"data: {json.dumps({'text': chunk.text, 'conversation_id': conv_id})}\n\n"
+
+            except Exception as e:
+                logger.error(f"Gemini SDK Error: {e}")
+                yield f"data: {json.dumps({'error': f'Gemini Error: {str(e)}'})}\n\n"
                 return
 
             # Save full AI message at the end
@@ -439,42 +451,27 @@ async def speech_to_text(file: UploadFile = File(...), current_user: str = Depen
         if len(audio_content) == 0:
             return {"text": ""}
 
-        # Use Gemini 2.0+ with fallback for STT
-        active_stt_model = None
-        stt_response = None
-        
-        # Sanitize mime type first
+        if not client:
+            raise HTTPException(status_code=500, detail="Gemini Client not initialized.")
+
+        # Sanitize mime type
         mime_type = file.content_type.split(';')[0]
         if 'webm' in mime_type:
             mime_type = 'audio/webm'
 
-        for m_name in ['models/gemini-2.0-flash', 'models/gemini-2.5-flash', 'models/gemini-3.1-flash-lite', 'models/gemini-flash-latest']:
-            try:
-                logger.info(f"STT: Trying model {m_name}")
-                test_model = genai.GenerativeModel(m_name)
-                
-                audio_part = {"mime_type": mime_type, "data": audio_content}
-                prompt = "Transcribe this audio accurately. Only return the transcription text."
-                
-                stt_response = test_model.generate_content([prompt, audio_part])
-                # Access text to trigger potential 404/permission errors
-                _ = stt_response.text
-                
-                active_stt_model = test_model
-                break
-            except Exception as e:
-                logger.warning(f"STT: Model {m_name} failed: {str(e)}")
-                continue
+        # Use new SDK for STT
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[
+                "Transcribe this audio accurately. Only return the transcription text.",
+                types.Part.from_bytes(data=audio_content, mime_type=mime_type)
+            ]
+        )
         
-        if not active_stt_model or not stt_response:
-            raise HTTPException(status_code=500, detail="No compatible audio-capable models found.")
-        
-        return {"text": stt_response.text.strip()}
+        return {"text": response.text.strip() if response.text else ""}
 
     except Exception as e:
-        logger.error(f"STT Error Details: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"STT Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"STT Error: {str(e)}")
 
 
