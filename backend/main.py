@@ -17,8 +17,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from google import genai
-from google.genai import types
+from groq import Groq
 from dotenv import load_dotenv
 from pypdf import PdfReader
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -38,24 +37,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 1 day
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("aether-ai-backend")
 
-# Gemini API
-GEN_AI_KEY = os.getenv("GEMINI_API_KEY")
+# Groq API
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = None
-if GEN_AI_KEY:
-    masked_key = GEN_AI_KEY[:5] + "..." + GEN_AI_KEY[-4:] if len(GEN_AI_KEY) > 10 else "***"
-    logger.info(f"Gemini API Key loaded: {masked_key}")
-    client = genai.Client(api_key=GEN_AI_KEY)
-    
-    # SCAN FOR MODELS
-    try:
-        logger.info("Scanning for available Gemini models...")
-        for m in client.models.list():
-            # In the new SDK, m is a pydantic-like object
-            logger.info(f"AVAILABLE MODEL: {m.name}")
-    except Exception as e:
-        logger.error(f"Could not list models: {e}")
+if GROQ_API_KEY:
+    masked_key = GROQ_API_KEY[:7] + "..." + GROQ_API_KEY[-4:] if len(GROQ_API_KEY) > 10 else "***"
+    logger.info(f"Groq API Key loaded: {masked_key}")
+    client = Groq(api_key=GROQ_API_KEY)
 else:
-    logger.error("GEMINI_API_KEY NOT FOUND in environment variables!")
+    logger.error("GROQ_API_KEY NOT FOUND in environment variables!")
 
 # Security - Using pbkdf2_sha256 to avoid bcrypt binary issues on Windows/Python 3.14
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -348,44 +338,44 @@ async def chat_endpoint(chat_req: ChatRequest, request: Request, current_user: s
         cur.close()
         conn.close()
 
-        # Get AI Response (Streaming) with the new SDK
+        # Get AI Response (Streaming) with Groq
         async def event_generator():
             full_response = ""
             if not client:
-                yield f"data: {json.dumps({'error': 'Gemini Client not initialized. Check API key.'})}\n\n"
+                yield f"data: {json.dumps({'error': 'Groq Client not initialized. Check API key.'})}\n\n"
                 return
 
             try:
-                # Prepare history for the new SDK format
-                contents = []
+                # Prepare history for Groq (OpenAI format)
+                messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
                 for m in chat_req.history:
-                    contents.append(types.Content(role="user" if m.role == "user" else "model", parts=[types.Part(text=m.content)]))
+                    messages.append({"role": m.role, "content": m.content})
                 
                 # Add current message
-                contents.append(types.Content(role="user", parts=[types.Part(text=chat_req.message)]))
+                messages.append({"role": "user", "content": chat_req.message})
 
                 # Determine model
-                # Force 'gemini-flash-latest' because Pro models often have 0 quota on the free tier
-                target_model = 'gemini-flash-latest'
+                # llama-3.3-70b-versatile is the high-end model
+                # llama-3.1-8b-instant is the fast model
+                target_model = 'llama-3.1-8b-instant' if chat_req.model == 'flash' else 'llama-3.3-70b-versatile'
                 
                 # Stream response
-                response_stream = client.models.generate_content_stream(
+                completion = client.chat.completions.create(
                     model=target_model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=0.7
-                    )
+                    messages=messages,
+                    temperature=0.7,
+                    stream=True,
                 )
 
-                for chunk in response_stream:
-                    if chunk.text:
-                        full_response += chunk.text
-                        yield f"data: {json.dumps({'text': chunk.text, 'conversation_id': conv_id})}\n\n"
+                for chunk in completion:
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        full_response += content
+                        yield f"data: {json.dumps({'text': content, 'conversation_id': conv_id})}\n\n"
 
             except Exception as e:
-                logger.error(f"Gemini SDK Error: {e}")
-                yield f"data: {json.dumps({'error': f'Gemini Error: {str(e)}'})}\n\n"
+                logger.error(f"Groq SDK Error: {e}")
+                yield f"data: {json.dumps({'error': f'Groq Error: {str(e)}'})}\n\n"
                 return
 
             # Save full AI message at the end
@@ -441,9 +431,6 @@ async def upload_file(file: UploadFile = File(...), current_user: str = Depends(
 
 @app.post("/api/speech-to-text")
 async def speech_to_text(file: UploadFile = File(...), current_user: str = Depends(get_current_user)):
-    if not GEN_AI_KEY:
-        raise HTTPException(status_code=500, detail="Gemini API Key not configured.")
-    
     try:
         audio_content = await file.read()
         logger.info(f"STT: Received file {file.filename}, type: {file.content_type}, size: {len(audio_content)} bytes")
@@ -452,27 +439,23 @@ async def speech_to_text(file: UploadFile = File(...), current_user: str = Depen
             return {"text": ""}
 
         if not client:
-            raise HTTPException(status_code=500, detail="Gemini Client not initialized.")
+            raise HTTPException(status_code=500, detail="Groq Client not initialized.")
 
         # Sanitize mime type
         mime_type = file.content_type.split(';')[0]
-        if 'webm' in mime_type:
-            mime_type = 'audio/webm'
-
-        # Use new SDK for STT
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[
-                "Transcribe this audio accurately. Only return the transcription text.",
-                types.Part.from_bytes(data=audio_content, mime_type=mime_type)
-            ]
+        
+        # Use Groq Whisper for STT (Very fast!)
+        transcription = client.audio.transcriptions.create(
+            file=(file.filename, audio_content),
+            model="whisper-large-v3",
+            response_format="text",
         )
         
-        return {"text": response.text.strip() if response.text else ""}
+        return {"text": transcription.strip()}
 
     except Exception as e:
-        logger.error(f"STT Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"STT Error: {str(e)}")
+        logger.error(f"Groq STT Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Groq STT Error: {str(e)}")
 
 
 # Demo Bookings
