@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: aether-ai-backend
+    env: python
+    region: singapore # Adjust if needed, Singapore is close to you
+    plan: free # Use 'free' or 'starter'
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true # Render will generate a random string if not provided
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: PORT
+        value: 8001 # This is just a fallback; Render sets $PORT dynamically
