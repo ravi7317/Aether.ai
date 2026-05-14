@@ -4,13 +4,23 @@ import ChatInterface from '../components/ChatInterface';
 import { API_URL } from '../config';
 
 const DashboardPage = ({ onLogout }) => {
-  const [activeConversationId, setActiveConversationId] = React.useState(null);
+  const [activeConversationId, setActiveConversationId] = React.useState(() => {
+    return localStorage.getItem('active_conversation_id');
+  });
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const [user, setUser] = React.useState(null);
   const [showProfile, setShowProfile] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [theme, setTheme] = React.useState('dark');
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(window.innerWidth > 768);
+
+  React.useEffect(() => {
+    if (activeConversationId) {
+      localStorage.setItem('active_conversation_id', activeConversationId);
+    } else {
+      localStorage.removeItem('active_conversation_id');
+    }
+  }, [activeConversationId]);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -177,6 +187,7 @@ const DashboardPage = ({ onLogout }) => {
         [data-theme='light'] .history-item.active {
           background: rgba(168, 85, 247, 0.1);
           color: var(--primary) !important;
+        }
         @media (max-width: 768px) {
           .sidebar {
             position: absolute !important;

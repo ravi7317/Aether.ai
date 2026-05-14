@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Plus, Search, Settings, LogOut, MessageSquare, ShieldCheck, Trash2, Pin, PinOff, Calendar, Clock } from 'lucide-react';
+import { Sparkles, Plus, Search, Settings, LogOut, MessageSquare, ShieldCheck, Trash2, Pin, PinOff, Calendar, Clock, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config';
 
 const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewChat, refreshTrigger, user, showProfile, setShowProfile, showSettings, setShowSettings, isOpen, onClose }) => {
   const [history, setHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [pinnedIds, setPinnedIds] = useState(() => {
     const saved = localStorage.getItem('pinned_conversations');
@@ -18,13 +19,18 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
       'Content-Type': 'application/json'
     };
 
+    setIsLoadingHistory(true);
     fetch(`${API_URL}/api/conversations`, { headers })
       .then(res => res.ok ? res.json() : [])
-      .then(data => setHistory(Array.isArray(data) ? data : []))
+      .then(data => {
+        console.log("History fetched from Supabase:", data.length, "items");
+        setHistory(Array.isArray(data) ? data : []);
+      })
       .catch(err => {
         console.error("History fetch error:", err);
         setHistory([]);
-      });
+      })
+      .finally(() => setIsLoadingHistory(false));
   }, [refreshTrigger]);
 
   useEffect(() => {
@@ -76,7 +82,7 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
     lastWeek.setDate(lastWeek.getDate() - 7);
 
     const filtered = history.filter(item => 
-      item.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.title || "New Chat").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     filtered.forEach(item => {
@@ -225,9 +231,14 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
             flex: 1,
             paddingRight: '4px'
           }}>
-            {groupedHistory.length === 0 ? (
+            {isLoadingHistory ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)' }}>
+                <Loader2 className="spinning" size={20} style={{ margin: '0 auto 0.5rem' }} />
+                <div style={{ fontSize: '0.8rem' }}>Loading history...</div>
+              </div>
+            ) : groupedHistory.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                No conversations found.
+                {searchTerm ? "No matching conversations." : "No conversations found."}
               </div>
             ) : (
               groupedHistory.map(([group, items]) => (

@@ -276,6 +276,32 @@ async def get_conversations(current_user: str = Depends(get_current_user)):
     conn.close()
     return convs
 
+@app.get("/api/conversations/{conv_id}")
+async def get_conversation(conv_id: str, current_user: str = Depends(get_current_user)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Verify ownership
+    cur.execute('SELECT * FROM conversations WHERE id = %s AND user_email = %s', (conv_id, current_user))
+    conv = cur.fetchone()
+    if not conv:
+        cur.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="Conversation not found")
+        
+    # Fetch messages
+    cur.execute('SELECT role, content FROM messages WHERE conversation_id = %s ORDER BY created_at ASC', (conv_id,))
+    messages = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        "id": conv['id'],
+        "title": conv['title'],
+        "messages": messages
+    }
+
 @app.delete("/api/conversations/{conv_id}")
 async def delete_conversation(conv_id: str, current_user: str = Depends(get_current_user)):
     conn = get_db_connection()

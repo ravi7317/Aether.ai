@@ -130,7 +130,5 @@ a {
 }
 
 @media (max-width: 768px) {
-  .sidebar {
-    display: none !important;
-  }
+  /* Sidebar is handled by DashboardPage responsive styles */
 }
