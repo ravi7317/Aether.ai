@@ -4,4 +4,4 @@ Disallow: /dashboard
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://aether-ai.vercel.app/sitemap.xml
+Sitemap: https://aether-ai-rosy.vercel.app/sitemap.xml
