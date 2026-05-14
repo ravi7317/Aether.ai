@@ -152,7 +152,14 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
         })
       });
 
-      if (!response.ok) throw new Error('Backend error');
+      if (!response.ok) {
+        if (response.status === 429) {
+          onOpenProfile();
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Limit reached');
+        }
+        throw new Error('Backend error');
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -194,7 +201,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
       if (error.name === 'AbortError') {
         setMessages(prev => [...prev, { role: 'model', content: "_Generation stopped by user._" }]);
       } else {
-        setMessages(prev => [...prev, { role: 'model', content: "Error: Could not connect to the Aether AI service." }]);
+        setMessages(prev => [...prev, { role: 'model', content: `**NOTICE:** ${error.message || "Could not connect to the Aether AI service."}` }]);
       }
     } finally {
       setIsLoading(false);
@@ -502,11 +509,27 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
 
   return (
     <div className="chat-interface" 
-         style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}
+         style={{ 
+           flex: 1, 
+           display: 'flex', 
+           flexDirection: 'column', 
+           height: '100%', 
+           position: 'relative',
+           overflow: 'hidden'
+         }}
          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
          onDragLeave={() => setIsDragging(false)}
          onDrop={handleDrop}>
-      
+       
+      {/* Animated Background Mesh */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 50%), radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.03) 0%, transparent 40%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
       <AnimatePresence>
         {isDragging && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -602,11 +625,92 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
           </button>
         </div>
       </header>
-
       <div 
         ref={scrollRef} 
-        style={{ flex: 1, overflowY: 'auto', padding: window.innerWidth <= 768 ? '1rem' : '2rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', position: 'relative' }}
+        style={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          padding: window.innerWidth <= 768 ? '1rem' : '2rem', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '2.5rem', 
+          position: 'relative' 
+        }}
       >
+        {messages.length === 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ 
+              flex: 1, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              textAlign: 'center', 
+              padding: '2rem',
+              gap: '2rem'
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                inset: '-20px',
+                background: 'var(--primary)',
+                filter: 'blur(40px)',
+                opacity: 0.15,
+                borderRadius: '50%'
+              }} />
+              <Sparkles size={64} color="var(--primary)" strokeWidth={1.5} />
+            </div>
+            
+            <div>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, rgba(255,255,255,0.4))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                How can I help you today?
+              </h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Aether AI is ready to assist with code, content, or complex questions.</p>
+            </div>
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr', 
+              gap: '1rem', 
+              width: '100%', 
+              maxWidth: '600px',
+              marginTop: '1rem'
+            }}>
+              {[
+                { title: 'Explain quantum computing', icon: <Cpu size={18} /> },
+                { title: 'Write a Python script', icon: <Terminal size={18} /> },
+                { title: 'Plan a travel itinerary', icon: <Globe size={18} /> },
+                { title: 'Brainstorm business ideas', icon: <Box size={18} /> }
+              ].map((s, i) => (
+                <motion.button
+                  key={i}
+                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setInput(s.title)}
+                  style={{
+                    padding: '1.25rem',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '16px',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{ color: 'var(--primary)' }}>{s.icon}</div>
+                  <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>{s.title}</span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {messages.map((msg, idx) => (
           <motion.div 
             key={idx} 

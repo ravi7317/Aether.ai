@@ -68,9 +68,18 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             name TEXT,
+            plan TEXT DEFAULT 'free',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Migration: Add plan column if table already exists without it
+    try:
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free'")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     # Conversations table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS conversations (
@@ -134,6 +143,16 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     model: Optional[str] = "flash"
 
+class UpgradeRequest(BaseModel):
+    plan: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    new_password: str
+
 # Auth Utilities
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -192,7 +211,7 @@ def get_cache_key(user_email, message, history):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -225,7 +244,7 @@ async def register(user: UserCreate):
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM users WHERE email = %s', (form_data.username,))
+    cur.execute('SELECT * FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))', (form_data.username,))
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -235,6 +254,43 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     
     access_token = create_access_token(data={"sub": user['email']})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT email FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))', (req.email,))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Email not found")
+    
+    # In a real app, send an email here. For now, we just confirm existence.
+    return {"message": "Recovery email simulated. Please proceed to reset."}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # 1. Verify user exists
+    cur.execute('SELECT email FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))', (req.email,))
+    user = cur.fetchone()
+    if not user:
+        cur.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # 2. Update password
+    hashed_pw = get_password_hash(req.new_password)
+    cur.execute('UPDATE users SET password = %s WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))', (hashed_pw, req.email))
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {"message": "Password reset successfully"}
 
 @app.get("/api/user/profile")
 @app.get("/api/me") # Fallback route
@@ -249,7 +305,7 @@ async def get_user_profile(current_user: str = Depends(get_current_user)):
     ''', (current_user,))
     msg_count = cur.fetchone()['count']
     
-    cur.execute('SELECT email, name FROM users WHERE email = %s', (current_user,))
+    cur.execute('SELECT email, name, plan FROM users WHERE email = %s', (current_user,))
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -257,14 +313,58 @@ async def get_user_profile(current_user: str = Depends(get_current_user)):
     return {
         "name": user['name'] or user['email'],
         "email": user['email'],
+        "plan": user['plan'],
         "stats": {
             "messages_sent": msg_count,
             "tokens_estimated": msg_count * 150, # Rough estimate
-            "plan_type": "Pro Plan",
+            "plan_type": user['plan'].capitalize() + " Plan",
             "member_since": "May 2026"
         },
         "avatar": f"https://api.dicebear.com/7.x/avataaars/svg?seed={user['email']}"
     }
+
+@app.get("/api/admin/users")
+async def admin_get_users(current_user: str = Depends(get_current_user)):
+    # Simple security: Only specific email can access admin (Change this to your email)
+    if current_user not in ["7317707192@ybl", "ravi@aethon.ai", "ravikurmi8313@gmail.com"]: 
+         logger.warning(f"Admin Access Denied for: {current_user}")
+         raise HTTPException(status_code=403, detail=f"Admin access denied for {current_user}")
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT email, name, plan, created_at FROM users ORDER BY created_at DESC')
+    users = cur.fetchall()
+    cur.close()
+    conn.close()
+    return users
+
+@app.post("/api/admin/update-plan")
+async def admin_update_plan(req: dict, current_user: str = Depends(get_current_user)):
+    if current_user not in ["7317707192@ybl", "ravi@aethon.ai", "ravikurmi8313@gmail.com"]:
+         logger.warning(f"Admin Access Denied for: {current_user}")
+         raise HTTPException(status_code=403, detail=f"Admin access denied for {current_user}")
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('UPDATE users SET plan = %s WHERE email = %s', (req['plan'], req['email']))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return {"message": "Plan updated"}
+
+@app.post("/api/user/upgrade")
+async def upgrade_user(req: UpgradeRequest, current_user: str = Depends(get_current_user)):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET plan = %s WHERE email = %s', (req.plan, current_user))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"message": f"Upgraded to {req.plan} successfully"}
+    except Exception as e:
+        logger.error(f"Upgrade Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upgrade plan")
 
 @app.get("/api/conversations")
 async def get_conversations(current_user: str = Depends(get_current_user)):
@@ -314,9 +414,32 @@ async def delete_conversation(conv_id: str, current_user: str = Depends(get_curr
     return {"message": "Conversation deleted"}
 
 @app.post("/api/chat")
-@limiter.limit("5/minute")
 async def chat_endpoint(chat_req: ChatRequest, request: Request, current_user: str = Depends(get_current_user)):
-    # Attach user to request state for rate limiter
+    # 1. Check User Plan & Message Limits
+    conn_plan = get_db_connection()
+    cur_plan = conn_plan.cursor()
+    
+    # Get current plan
+    cur_plan.execute('SELECT plan FROM users WHERE email = %s', (current_user,))
+    user_data = cur_plan.fetchone()
+    plan = user_data['plan'] if user_data else 'free'
+    
+    # Count messages sent today
+    cur_plan.execute('''
+        SELECT COUNT(*) FROM messages m
+        JOIN conversations c ON m.conversation_id = c.id
+        WHERE c.user_email = %s AND m.role = 'user' 
+        AND m.created_at >= CURRENT_DATE
+    ''', (current_user,))
+    msgs_today = cur_plan.fetchone()['count']
+    cur_plan.close()
+    conn_plan.close()
+    
+    # Free users get 20 messages per day
+    if plan == 'free' and msgs_today >= 20:
+        raise HTTPException(status_code=429, detail="Daily limit of 20 free messages reached. Upgrade to Pro for unlimited access!")
+
+    # Attach user to request state for rate limiter (if still needed)
     request.state.user = current_user
     
     if not GROQ_API_KEY:

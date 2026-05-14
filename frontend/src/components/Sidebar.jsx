@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Plus, Search, Settings, LogOut, MessageSquare, ShieldCheck, Trash2, Pin, PinOff, Calendar, Clock, Loader2 } from 'lucide-react';
+import { Sparkles, Plus, Search, Settings, LogOut, MessageSquare, ShieldCheck, Trash2, Pin, PinOff, Calendar, Clock, Loader2, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config';
 
@@ -181,24 +181,41 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
           </button>
         </div>
 
-        <button className="new-chat-btn" onClick={onNewChat} style={{
-          width: '100%',
-          padding: '0.8rem',
-          background: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '12px',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          cursor: 'pointer',
-          transition: '0.2s',
-          fontWeight: 600,
-          marginBottom: '1rem'
-        }}>
-          <Plus size={18} />
-          <span>New Chat</span>
-        </button>
+        <motion.button 
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
+          whileTap={{ scale: 0.98 }}
+          className="new-chat-btn" 
+          onClick={onNewChat} 
+          style={{
+            width: '100%',
+            padding: '0.85rem',
+            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(255, 255, 255, 0.03))',
+            border: '1px solid rgba(168, 85, 247, 0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            cursor: 'pointer',
+            transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontWeight: 700,
+            marginBottom: '1.25rem',
+            boxShadow: '0 4px 15px rgba(168, 85, 247, 0.1)'
+          }}
+        >
+          <div style={{
+            background: 'var(--primary)',
+            padding: '4px',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Plus size={16} strokeWidth={3} />
+          </div>
+          <span style={{ letterSpacing: '0.01em' }}>New Conversation</span>
+        </motion.button>
 
         <div className="search-box" style={{
           position: 'relative',
@@ -339,6 +356,11 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
         paddingTop: '1.25rem',
         borderTop: '1px solid rgba(255,255,255,0.05)'
       }}>
+        <button className="sidebar-action" onClick={() => setShowProfile(true)} style={bottomActionStyle}>
+          <CreditCard size={16} color="var(--primary)" />
+          <span>Pricing Plans</span>
+        </button>
+
         <button className="sidebar-action" onClick={() => setShowSettings(true)} style={bottomActionStyle}>
           <Settings size={16} />
           <span>Settings</span>
@@ -365,8 +387,8 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
               {user?.name || "User Account"}
             </div>
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <ShieldCheck size={10} color="#4ade80" />
-              <span>Pro Plan</span>
+              <ShieldCheck size={10} color={user?.plan === 'free' ? 'var(--text-dim)' : "#4ade80"} />
+              <span>{user?.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : 'Free'} Plan</span>
             </div>
           </div>
           <button onClick={(e) => { e.stopPropagation(); onLogout(); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>

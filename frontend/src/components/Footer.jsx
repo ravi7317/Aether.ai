@@ -28,24 +28,24 @@ const Footer = () => {
           <div className="footer-links" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
             <div className="link-group">
               <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', letterSpacing: '0.1rem', marginBottom: '1.5rem' }}>PRODUCT</h4>
-              <a href="#" className="footer-link">Features</a>
-              <a href="#" className="footer-link">Pricing</a>
+              <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="footer-link">Features</a>
+              <a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }} className="footer-link">Pricing</a>
               <a href="#" className="footer-link">Changelog</a>
-              <a href="#" className="footer-link">Docs</a>
+              <a href="#" className="footer-link">Documentation</a>
             </div>
             <div className="link-group">
               <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', letterSpacing: '0.1rem', marginBottom: '1.5rem' }}>SOCIAL</h4>
-              <a href="#" className="footer-link">GitHub</a>
-              <a href="#" className="footer-link">Twitter</a>
-              <a href="#" className="footer-link">LinkedIn</a>
-              <a href="#" className="footer-link">Discord</a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="footer-link">GitHub</a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="footer-link">Twitter / X</a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="footer-link">LinkedIn</a>
+              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="footer-link">Join Discord</a>
             </div>
             <div className="link-group">
               <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', letterSpacing: '0.1rem', marginBottom: '1.5rem' }}>LEGAL</h4>
-              <a href="#" className="footer-link">Privacy</a>
-              <a href="#" className="footer-link">Terms</a>
-              <a href="#" className="footer-link">Security</a>
-              <a href="#" className="footer-link">Contact</a>
+              <a href="#" className="footer-link">Privacy Policy</a>
+              <a href="#" className="footer-link">Terms of Service</a>
+              <a href="#" className="footer-link">Security Audit</a>
+              <a href="mailto:support@aetherai.com" className="footer-link">Contact Support</a>
             </div>
           </div>
         </div>

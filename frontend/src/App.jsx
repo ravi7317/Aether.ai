@@ -9,10 +9,12 @@ import Footer from './components/Footer';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import BookingModal from './components/BookingModal';
+import AdminPanel from './components/AdminPanel';
 
 function App() {
   // Initialize view based on saved token
   const [view, setView] = useState(() => {
+    if (window.location.pathname === '/admin') return 'admin';
     return localStorage.getItem('token') ? 'dashboard' : 'landing';
   });
   const [authMode, setAuthMode] = useState('login');
@@ -67,8 +69,10 @@ function App() {
         />
       )}
       {!isDashboard && <Navbar 
+        isLoggedIn={!!localStorage.getItem('token')}
         onLogin={() => navigateToAuth('login')} 
         onSignup={() => navigateToAuth('signup')} 
+        onDashboard={navigateToDashboard}
         onBookDemo={() => setShowBooking(true)}
       />}
       
@@ -83,12 +87,14 @@ function App() {
               }} 
             />
             <Features />
-            <Pricing />
+            <Pricing onSelectPlan={() => navigateToAuth('signup')} />
             <Testimonials />
             <CTA onGetStarted={() => navigateToAuth('signup')} />
           </>
         ) : view === 'auth' ? (
           <AuthPage mode={authMode} setMode={setAuthMode} onBack={navigateToHome} onLoginSuccess={navigateToDashboard} />
+        ) : view === 'admin' ? (
+          <AdminPanel />
         ) : (
           <DashboardPage onLogout={handleLogout} />
         )}

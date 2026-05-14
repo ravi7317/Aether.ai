@@ -9,10 +9,57 @@ const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: ''
+    name: '',
+    newPassword: ''
   });
+  const [resetStep, setResetStep] = useState(0); // 0: Auth, 1: Forgot Email, 2: Reset New Pass
+  const [success, setSuccess] = useState('');
 
   const isLogin = mode === 'login';
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const trimmedEmail = formData.email.trim();
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedEmail })
+      });
+      if (!response.ok) throw new Error('Email not found');
+      setResetStep(2);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, new_password: formData.newPassword })
+      });
+      if (!response.ok) throw new Error('Failed to reset password');
+      setSuccess('Password updated! Redirecting...');
+      setTimeout(() => {
+        setResetStep(0);
+        setMode('login');
+        setSuccess('');
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -99,10 +146,10 @@ const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
       )}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-          {isLogin ? 'Welcome back' : 'Create account'}
+          {resetStep === 1 ? 'Recover Password' : resetStep === 2 ? 'Reset Password' : (isLogin ? 'Welcome back' : 'Create account')}
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-          {isLogin ? 'Enter your details to sign in' : 'Start your journey with Aether AI'}
+          {resetStep === 1 ? "Enter your email to get a reset link" : resetStep === 2 ? "Choose a new secure password" : (isLogin ? 'Enter your details to sign in' : 'Start your journey with Aether AI')}
         </p>
       </div>
 
@@ -121,72 +168,128 @@ const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        {!isLogin && (
+      {resetStep === 0 ? (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {!isLogin && (
+            <div className="input-group">
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Full Name</label>
+              <div className="input-field">
+                <User className="field-icon" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="John Doe" 
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="input-group">
-            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Full Name</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Email Address</label>
             <div className="input-field">
-              <User className="field-icon" size={18} />
+              <Mail className="field-icon" size={18} />
               <input 
-                type="text" 
-                placeholder="John Doe" 
+                type="email" 
+                placeholder="name@company.com" 
                 required
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
               />
             </div>
           </div>
-        )}
 
-        <div className="input-group">
-          <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Email Address</label>
-          <div className="input-field">
-            <Mail className="field-icon" size={18} />
-            <input 
-              type="email" 
-              placeholder="name@company.com" 
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-            />
+          <div className="input-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Password</label>
+              {isLogin && (
+                <button 
+                  type="button" 
+                  onClick={() => setResetStep(1)}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <div className="input-field">
+              <Lock className="field-icon" size={18} />
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="••••••••" 
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+              />
+              <button 
+                type="button" 
+                className="visibility-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="input-group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Password</label>
-            {isLogin && <a href="#" style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>Forgot password?</a>}
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? (
+              <Loader2 className="spinning" size={20} />
+            ) : (
+              <>
+                <span>{isLogin ? 'Login' : 'Create Account'}</span>
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        </form>
+      ) : resetStep === 1 ? (
+        <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="input-group">
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Email Address</label>
+            <div className="input-field">
+              <Mail className="field-icon" size={18} />
+              <input 
+                type="email" 
+                placeholder="name@company.com" 
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+              />
+            </div>
           </div>
-          <div className="input-field">
-            <Lock className="field-icon" size={18} />
-            <input 
-              type={showPassword ? 'text' : 'password'} 
-              placeholder="••••••••" 
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-            />
-            <button 
-              type="button" 
-              className="visibility-toggle"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? <Loader2 className="spinning" size={20} /> : 'Send Reset Link'}
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setResetStep(0)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem' }}
+          >
+            Back to Login
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="input-group">
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>New Password</label>
+            <div className="input-field">
+              <Lock className="field-icon" size={18} />
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                required
+                value={formData.newPassword}
+                onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+              />
+            </div>
           </div>
-        </div>
-
-        <button type="submit" className="auth-submit" disabled={loading}>
-          {loading ? (
-            <Loader2 className="spinning" size={20} />
-          ) : (
-            <>
-              <span>{isLogin ? 'Login' : 'Create Account'}</span>
-              <ArrowRight size={18} />
-            </>
-          )}
-        </button>
-      </form>
+          {success && <div style={{ color: '#22c55e', fontSize: '0.85rem', textAlign: 'center' }}>{success}</div>}
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? <Loader2 className="spinning" size={20} /> : 'Update Password'}
+          </button>
+        </form>
+      )}
 
       <div className="divider">
         <span>OR CONTINUE WITH</span>

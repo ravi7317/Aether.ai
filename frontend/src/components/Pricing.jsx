@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, Sparkles, Zap, Shield, Globe, Terminal, Box, Layers, Cpu, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
+import PaymentModal from './PaymentModal';
 
-const Pricing = () => {
+const Pricing = ({ onSelectPlan }) => {
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  const handlePlanSelect = (plan) => {
+    const isLoggedIn = !!localStorage.getItem('token');
+    
+    if (plan.price === '₹0' || !isLoggedIn) {
+      if (onSelectPlan) onSelectPlan();
+    } else {
+      setSelectedPlan(plan);
+      setIsPaymentModalOpen(true);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsPaymentModalOpen(false);
+    alert("Payment verified! Your account is being upgraded...");
+    window.location.reload(); 
+  };
+
   const plans = [
     {
       name: 'Aether Free',
@@ -192,26 +213,28 @@ const Pricing = () => {
                 ))}
               </div>
 
-              <button style={{
-                width: '100%',
-                padding: '1.2rem',
-                borderRadius: '16px',
-                background: plan.featured ? 'var(--primary)' : 'rgba(255, 255, 255, 0.05)',
-                border: plan.featured ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'white',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: plan.featured ? '0 10px 20px rgba(168, 85, 247, 0.3)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!plan.featured) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                else e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                if (!plan.featured) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                else e.currentTarget.style.transform = 'scale(1)';
-              }}
+              <button 
+                onClick={() => handlePlanSelect(plan)}
+                style={{
+                  width: '100%',
+                  padding: '1.2rem',
+                  borderRadius: '16px',
+                  background: plan.featured ? 'var(--primary)' : 'rgba(255, 255, 255, 0.05)',
+                  border: plan.featured ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: plan.featured ? '0 10px 20px rgba(168, 85, 247, 0.3)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (!plan.featured) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  else e.currentTarget.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!plan.featured) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  else e.currentTarget.style.transform = 'scale(1)';
+                }}
               >
                 {plan.buttonText}
               </button>
@@ -219,6 +242,13 @@ const Pricing = () => {
           ))}
         </div>
       </div>
+
+      <PaymentModal 
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        plan={selectedPlan}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </section>
   );
 };

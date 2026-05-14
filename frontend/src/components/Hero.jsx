@@ -172,12 +172,26 @@ const Terminal = () => {
 
 const Hero = ({ onGetStarted, onTryDemo }) => {
   return (
-    <section className="hero" style={{ padding: '6rem 0', overflow: 'hidden' }}>
-      <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '4rem', alignItems: 'center' }}>
+    <section className="hero" style={{ padding: '8rem 0 6rem', overflow: 'hidden', position: 'relative' }}>
+      {/* Background Decorative Elements */}
+      <div style={{
+        position: 'absolute',
+        top: '10%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '600px',
+        height: '600px',
+        background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%)',
+        filter: 'blur(60px)',
+        zIndex: 0,
+        pointerEvents: 'none'
+      }} />
+
+      <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '4rem', alignItems: 'center', position: 'relative', zIndex: 1 }}>
         <motion.div 
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="hero-content"
         >
           <div className="badge" style={{

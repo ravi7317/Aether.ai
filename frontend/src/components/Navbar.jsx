@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, Github, Menu } from 'lucide-react';
 
-const Navbar = ({ onLogin, onSignup, onBookDemo }) => {
+const Navbar = ({ onLogin, onSignup, onBookDemo, isLoggedIn, onDashboard }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   return (
@@ -63,8 +63,14 @@ const Navbar = ({ onLogin, onSignup, onBookDemo }) => {
           gap: '1.5rem',
           alignItems: 'center'
         }}>
-          <a href="#" onClick={(e) => { e.preventDefault(); onLogin(); }} style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Login</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); onSignup(); }} className="btn-primary">Sign up</a>
+          {isLoggedIn ? (
+            <button onClick={onDashboard} className="btn-primary">Go to Dashboard</button>
+          ) : (
+            <>
+              <a href="#" onClick={(e) => { e.preventDefault(); onLogin(); }} style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Login</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onSignup(); }} className="btn-primary">Sign up</a>
+            </>
+          )}
         </div>
 
         <button 

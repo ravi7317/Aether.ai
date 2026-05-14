@@ -1,6 +1,8 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
 import ChatInterface from '../components/ChatInterface';
+import ProfileModal from '../components/ProfileModal';
+import PaymentModal from '../components/PaymentModal';
 import { API_URL } from '../config';
 
 const DashboardPage = ({ onLogout }) => {
@@ -11,6 +13,8 @@ const DashboardPage = ({ onLogout }) => {
   const [user, setUser] = React.useState(null);
   const [showProfile, setShowProfile] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
+  const [paymentPlan, setPaymentPlan] = React.useState(null);
+  const [isPaymentOpen, setIsPaymentOpen] = React.useState(false);
   const [theme, setTheme] = React.useState('dark');
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(window.innerWidth > 768);
 
@@ -214,6 +218,27 @@ const DashboardPage = ({ onLogout }) => {
       {window.innerWidth <= 768 && isSidebarOpen && (
         <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
       )}
+      <ProfileModal 
+        isOpen={showProfile} 
+        onClose={() => setShowProfile(false)} 
+        user={user}
+        onUpgrade={(plan) => {
+          setShowProfile(false);
+          setPaymentPlan({ name: 'Aether ' + plan.name, price: plan.price });
+          setIsPaymentOpen(true);
+        }}
+      />
+
+      <PaymentModal 
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        plan={paymentPlan}
+        onPaymentSuccess={() => {
+          setIsPaymentOpen(false);
+          setShowProfile(false);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };
