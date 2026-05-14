@@ -196,11 +196,10 @@ const DashboardPage = ({ onLogout }) => {
             bottom: 0;
             z-index: 100 !important;
             width: 85% !important;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
+            transition: opacity 0.3s ease;
           }
           .sidebar.open {
-            transform: translateX(0);
+            /* transform is handled by Framer Motion */
           }
           .sidebar-overlay {
             position: absolute;

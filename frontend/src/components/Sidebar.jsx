@@ -117,7 +117,7 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
       animate={{ 
         width: isOpen ? (window.innerWidth <= 768 ? '85%' : '280px') : (window.innerWidth <= 768 ? '0%' : '0px'),
         opacity: isOpen ? 1 : 0,
-        x: isOpen ? 0 : (window.innerWidth <= 768 ? -100 : -20),
+        x: isOpen ? '0%' : (window.innerWidth <= 768 ? '-100%' : '-100%'),
       }}
       transition={{ type: 'spring', damping: 20, stiffness: 100 }}
       className={`sidebar ${isOpen ? 'open' : ''}`} 
