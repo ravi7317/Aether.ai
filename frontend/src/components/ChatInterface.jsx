@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, User, Sparkles, Copy, Check, RotateCcw, Paperclip, Mic, Image as ImageIcon, Send, Loader2, Share2, ArrowDown, Menu } from 'lucide-react';
+import { Moon, User, Sparkles, Copy, Check, RotateCcw, Paperclip, Mic, Image as ImageIcon, Send, Loader2, Share2, ArrowDown, Menu, Cpu, Terminal, Globe, Box } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config';
 
