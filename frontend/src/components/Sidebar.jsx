@@ -119,7 +119,13 @@ const Sidebar = ({ onLogout, activeConversationId, onSelectConversation, onNewCh
         opacity: isOpen ? 1 : 0,
         x: isOpen ? '0%' : (window.innerWidth <= 768 ? '-100%' : '-100%'),
       }}
-      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+      drag={window.innerWidth <= 768 ? "x" : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.1}
+      onDragEnd={(e, info) => {
+        if (info.offset.x < -50) onClose();
+      }}
+      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       className={`sidebar ${isOpen ? 'open' : ''}`} 
       style={{
         height: '100%',

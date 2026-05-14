@@ -521,7 +521,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 2rem',
+        padding: window.innerWidth <= 768 ? '0 1rem' : '0 2rem',
         borderBottom: '1px solid var(--card-border)',
         background: 'rgba(5, 1, 13, 0.4)',
         backdropFilter: 'blur(10px)',
@@ -605,7 +605,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
 
       <div 
         ref={scrollRef} 
-        style={{ flex: 1, overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', position: 'relative' }}
+        style={{ flex: 1, overflowY: 'auto', padding: window.innerWidth <= 768 ? '1rem' : '2rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', position: 'relative' }}
       >
         {messages.map((msg, idx) => (
           <motion.div 
@@ -702,7 +702,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
         )}
       </div>
       
-      <div style={{ padding: '0 2rem 2rem' }}>
+      <div style={{ padding: window.innerWidth <= 768 ? '0 1rem 1rem' : '0 2rem 2rem' }}>
         <form onSubmit={handleSend} style={{ 
           background: 'rgba(255, 255, 255, 0.03)', 
           border: isRecording ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)', 
