@@ -620,7 +620,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
             }} 
             style={{ 
               alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', 
-              maxWidth: window.innerWidth <= 768 ? '95%' : '85%',
+              maxWidth: '85%',
               position: 'relative'
             }}
             className="message-wrapper"
