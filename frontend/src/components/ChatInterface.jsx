@@ -900,7 +900,7 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
               }}
             >
               <Sparkles size={14} style={{ color: 'var(--primary)' }} />
-              <span>{selectedModel.toUpperCase()}</span>
+              <span>{selectedModel === 'flash' ? 'Llama 3.1 8B' : 'Llama 3.3 70B'}</span>
               <motion.span animate={{ rotate: showModelDropdown ? 180 : 0 }}>▼</motion.span>
             </button>
 
