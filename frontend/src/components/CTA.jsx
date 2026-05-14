@@ -12,8 +12,8 @@ const CTA = ({ onGetStarted }) => {
           textAlign: 'center',
           backdropFilter: 'blur(20px)'
         }}>
-          <h2 style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>Ready to transform your workflow?</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 3rem' }}>
+          <h2 style={{ fontSize: 'var(--font-size-h2)', marginBottom: '1.5rem' }}>Ready to transform your workflow?</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-p)', maxWidth: '600px', margin: '0 auto 3rem' }}>
             Join over 50,000+ teams using Aether AI to automate the mundane and focus on the extraordinary.
           </p>
           <div className="cta-btns" style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>

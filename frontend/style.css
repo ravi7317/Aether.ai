@@ -9,6 +9,9 @@
     --text-muted: #94a3b8;
     --glass-blur: 16px;
     --container-width: 1200px;
+    --font-size-h1: 4.5rem;
+    --font-size-h2: 3rem;
+    --font-size-p: 1.1rem;
 }
 
 * {
@@ -44,6 +47,12 @@ ul {
     max-width: var(--container-width);
     margin: 0 auto;
     padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1.25rem;
+    }
 }
 
 /* Mesh Gradient Background */
@@ -629,6 +638,10 @@ ul {
 
 /* Responsive */
 @media (max-width: 1024px) {
+    :root {
+        --font-size-h1: 3.5rem;
+        --font-size-h2: 2.5rem;
+    }
     .hero .container {
         grid-template-columns: 1fr;
         text-align: center;
@@ -636,7 +649,6 @@ ul {
     .hero-content {
         margin: 0 auto;
     }
-    .hero h1 { font-size: 3.5rem; }
     .hero-btns { justify-content: center; }
     .feature-grid, .testimonial-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -648,17 +660,63 @@ ul {
 }
 
 @media (max-width: 768px) {
+    :root {
+        --font-size-h1: 2.5rem;
+        --font-size-h2: 2rem;
+        --font-size-p: 1rem;
+    }
     .nav-links, .nav-actions {
-        display: none;
+        display: none !important;
     }
     .mobile-menu-toggle {
-        display: block;
+        display: block !important;
     }
-    .hero h1 { font-size: 2.8rem; }
+    .hero { padding: 4rem 0; }
+    .hero h1 { font-size: var(--font-size-h1); }
     .feature-grid, .testimonial-grid {
         grid-template-columns: 1fr;
     }
-    .section-header h2 { font-size: 2.2rem; }
-    .cta-card h2 { font-size: 2.5rem; }
-    .cta-btns { flex-direction: column; }
+    .section-header h2 { font-size: var(--font-size-h2); }
+    .cta-card h2 { font-size: 2rem; }
+    .cta-btns { 
+        flex-direction: column; 
+        align-items: center;
+    }
+    .cta-btns a {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Chat adjustments */
+    .chat-interface {
+        padding: 0 !important;
+    }
+    .chat-nav {
+        padding: 0 1rem !important;
+    }
+    .chat-nav h2 {
+        font-size: 0.8rem !important;
+    }
+    .message-wrapper {
+        max-width: 95% !important;
+    }
+    .chat-interface .messages-container {
+        padding: 1rem !important;
+    }
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 10, 12, 0.95);
+    backdrop-filter: blur(20px);
+    padding: 2rem;
+    border-bottom: 1px solid var(--card-border);
+    z-index: 99;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }

@@ -67,7 +67,7 @@ const Pricing = () => {
   ];
 
   return (
-    <section id="pricing" style={{ padding: '10rem 2rem', position: 'relative', overflow: 'hidden' }}>
+    <section id="pricing" className="pricing-section" style={{ padding: '8rem 1.25rem', position: 'relative', overflow: 'hidden' }}>
       {/* Background Orbs */}
       <div style={{
         position: 'absolute',
@@ -96,10 +96,10 @@ const Pricing = () => {
               fontWeight: 700,
               letterSpacing: '0.1em'
             }}>PRICING PLANS</span>
-            <h2 style={{ fontSize: '3.5rem', fontWeight: 800, marginTop: '1.5rem', color: 'white' }}>
+            <h2 style={{ fontSize: 'var(--font-size-h2)', fontWeight: 800, marginTop: '1.5rem', color: 'white' }}>
               Choose your <span style={{ color: 'var(--primary)' }}>intelligence</span> level
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '1.5rem auto' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-p)', maxWidth: '600px', margin: '1.5rem auto' }}>
               From casual exploration to full-scale business automation. Aether AI scales with your ambition.
             </p>
           </motion.div>

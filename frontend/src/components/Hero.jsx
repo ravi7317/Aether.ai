@@ -172,8 +172,8 @@ const Terminal = () => {
 
 const Hero = ({ onGetStarted, onTryDemo }) => {
   return (
-    <section className="hero" style={{ padding: '6rem 0', overflow: 'hidden' }}>
-      <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '4rem', alignItems: 'center' }}>
+    <section className="hero">
+      <div className="container">
         <motion.div 
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -196,10 +196,10 @@ const Hero = ({ onGetStarted, onTryDemo }) => {
             <CheckCircle2 size={14} />
             <span>v1.2.0 is now live</span>
           </div>
-          <h1 style={{ fontSize: '4.5rem', lineHeight: 1.1, marginBottom: '1.5rem', fontWeight: 800 }}>
+          <h1 style={{ fontSize: 'var(--font-size-h1)', lineHeight: 1.1, marginBottom: '1.5rem', fontWeight: 800 }}>
             Your Intelligent <br /><span className="gradient-text">AI Assistant</span>
           </h1>
-          <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '2.5rem', maxWidth: '520px' }}>
+          <p style={{ fontSize: 'var(--font-size-p)', color: 'var(--text-muted)', marginBottom: '2.5rem', maxWidth: '520px' }}>
             Experience the next generation of productivity. Aether AI seamlessly integrates into your workflow, providing hyper-fast responses and secure context-aware assistance.
           </p>
           <div style={{ display: 'flex', gap: '1rem' }}>
@@ -217,14 +217,6 @@ const Hero = ({ onGetStarted, onTryDemo }) => {
           <Terminal />
         </motion.div>
       </div>
-      <style>{`
-        @media (max-width: 1024px) {
-          .hero .container { grid-template-columns: 1fr; text-align: center; }
-          .hero-content { margin: 0 auto; }
-          h1 { font-size: 3.5rem !important; }
-          div[style*="display: flex; gap: 1rem"] { justify-content: center; }
-        }
-      `}</style>
     </section>
   );
 };

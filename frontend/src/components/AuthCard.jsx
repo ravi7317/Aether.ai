@@ -65,8 +65,8 @@ const AuthCard = ({ mode, setMode, onLoginSuccess, onClose }) => {
       backdropFilter: 'blur(32px)',
       border: '1px solid rgba(255, 255, 255, 0.08)',
       borderRadius: '28px',
-      padding: '3rem',
-      width: '100%',
+      padding: window.innerWidth <= 768 ? '2.5rem 1.5rem' : '3rem',
+      width: '95%',
       maxWidth: '440px',
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(168, 85, 247, 0.1)',
       position: 'relative'
