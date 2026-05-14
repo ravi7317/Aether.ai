@@ -217,7 +217,8 @@ app.add_middleware(
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
         "https://aether-ai-git-main-ravikurmi8313-4613s-projects.vercel.app",
-        "https://aether-ai.vercel.app"
+        "https://aether-ai.vercel.app",
+        "https://aether-ai-rosy.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
