@@ -104,7 +104,7 @@ Backend Rules:
 - Implement proper error handling.
 
 AI Engineering Rules:
-- Prefer Gemini for multimodal AI tasks.
+- Prefer Groq (Llama 3 models) for text and coding tasks.
 - Use Whisper for speech-to-text.
 - Use RAG for document-based AI systems.
 - Use embeddings for semantic search.

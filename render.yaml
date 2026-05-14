@@ -11,7 +11,7 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: GEMINI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
       - key: SECRET_KEY
         generateValue: true # Render will generate a random string if not provided

@@ -829,8 +829,8 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
                     transition: '0.2s'
                   }}
                 >
-                  <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600 }}>Gemini Flash</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Fast & Efficient</div>
+                  <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600 }}>Llama 3.1 8B</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Ultra-Fast & Efficient</div>
                 </div>
                 <div 
                   onClick={() => { setSelectedModel('pro'); setShowModelDropdown(false); }}
@@ -843,8 +843,8 @@ const ChatInterface = ({ onLogout, conversationId, onConversationStarted, onOpen
                     transition: '0.2s'
                   }}
                 >
-                  <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600 }}>Gemini Pro</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Smart & Complex</div>
+                  <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600 }}>Llama 3.3 70B</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Advanced Reasoning</div>
                 </div>
               </motion.div>
             )}

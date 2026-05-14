@@ -200,7 +200,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Aether AI Backend is Active", "version": "1.2.0", "timestamp": "2026-05-08"}
+    return {"message": "Aether AI Backend is Active", "version": "1.2.0", "timestamp": "2026-05-14"}
 
 # Endpoints
 @app.post("/api/auth/register")
@@ -293,8 +293,8 @@ async def chat_endpoint(chat_req: ChatRequest, request: Request, current_user: s
     # Attach user to request state for rate limiter
     request.state.user = current_user
     
-    if not GEN_AI_KEY:
-        raise HTTPException(status_code=500, detail="Gemini API key not configured")
+    if not GROQ_API_KEY:
+        raise HTTPException(status_code=500, detail="Groq API key not configured")
 
     # 1. Check Cache
     cache_key = get_cache_key(current_user, chat_req.message, chat_req.history)
@@ -349,7 +349,9 @@ async def chat_endpoint(chat_req: ChatRequest, request: Request, current_user: s
                 # Prepare history for Groq (OpenAI format)
                 messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
                 for m in chat_req.history:
-                    messages.append({"role": m.role, "content": m.content})
+                    # Map 'model' role to 'assistant' for Groq compatibility
+                    role = "assistant" if m.role == "model" else m.role
+                    messages.append({"role": role, "content": m.content})
                 
                 # Add current message
                 messages.append({"role": "user", "content": chat_req.message})

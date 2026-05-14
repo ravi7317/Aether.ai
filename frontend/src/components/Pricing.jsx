@@ -12,7 +12,7 @@ const Pricing = () => {
       icon: <Zap size={24} className="text-primary" />,
       features: [
         'Basic AI chat access',
-        'Gemini Flash model access',
+        'Llama 3.1 8B access',
         'Basic PDF upload (10MB)',
         'Basic image analysis',
         '20 messages/day',
@@ -31,7 +31,7 @@ const Pricing = () => {
       icon: <Sparkles size={24} color="#a855f7" />,
       features: [
         'Advanced AI chat (Faster)',
-        'Gemini 2.0 Flash & Llama',
+        'Llama 3.3 70B & Advanced',
         '100MB PDF uploads',
         '500 messages/day',
         'Advanced OCR & Image analysis',
